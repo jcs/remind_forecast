@@ -116,6 +116,8 @@ BEGIN {
           out << "yesterday"
         elsif days == 0
           out << "today"
+        elsif days == 1
+          out << "tomorrow"
         else
           out << "in #{days} day#{days == 1 ? '' : 's'}"
         end
