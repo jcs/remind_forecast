@@ -83,6 +83,9 @@ BEGIN {
   class Event
     BOLD = "\e[1;1m"
     UNBOLD = "\e[0;0m"
+    GRAY = "\e[38;5;248m"
+    LIGHTGRAY = "\e[38;5;252m"
+    RESET = "\e[0;0m"
 
     attr_accessor :start
     attr_accessor :end
@@ -101,7 +104,16 @@ BEGIN {
         days = days - (weeks * 7)
       end
 
-      out = "#{BOLD}#{self.desc}#{UNBOLD} "
+      out = ""
+      if weeks == 0 && days == 0
+        out << BOLD
+      elsif weeks == 1
+        out << GRAY
+      elsif weeks > 1
+        out << LIGHTGRAY
+      end
+
+      out << self.desc << " "
 
       if weeks > 0
         out << "in #{weeks} week#{weeks == 1 ? '' : 's'}"
@@ -127,11 +139,17 @@ BEGIN {
         out << " at #{self.time}"
       end
 
+      if weeks == 0 && days == 0
+        out << UNBOLD
+      end
+
       out << " (" << self.start.strftime("%a #{self.start.day} %b").downcase
       if self.start != self.end
         out << " to " << self.end.strftime("%a #{self.end.day} %b").downcase
       end
       out << ")"
+
+      out << RESET
 
       out
     end
