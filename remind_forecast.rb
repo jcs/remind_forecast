@@ -74,7 +74,7 @@ IO.popen("remind -q -g -s+#{WEEKS_OUT} -b1 -l #{REMIND_FILE}") do |remind|
   end
 
   # discard events that ended before today and then print them
-  events.reject{|e| e.end < TODAY }.each do |e|
+  events.reject{|e| e.end < TODAY }.reverse.each do |e|
     puts e.to_s(TODAY)
   end
 end
