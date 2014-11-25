@@ -3,7 +3,7 @@
 # remind_forecast.rb
 # print upcoming events from remind(1) in a nicer way
 #
-# Copyright (c) 2010 joshua stein <jcs@jcs.org>
+# Copyright (c) 2010, 2014 joshua stein <jcs@jcs.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
