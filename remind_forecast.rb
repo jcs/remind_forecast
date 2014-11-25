@@ -32,7 +32,7 @@
 require "date"
 
 # number of weeks we'll look in advance
-WEEKS_OUT = 5
+WEEKS_OUT = 3
 
 # file to have remind look at
 REMIND_FILE = "~/.reminders"
@@ -40,51 +40,86 @@ REMIND_FILE = "~/.reminders"
 # day to do everything relative to
 TODAY = Date.today
 
-IO.popen("remind -q -g -s+#{WEEKS_OUT} -b1 -l #{REMIND_FILE}") do |remind|
-  prev_fileinfo = nil
-  events = []
-
-  continue_last = false
-  remind.each_line do |line|
-    # "# fileinfo 8 /path/.reminders"
-    if m = line.match(/^# fileinfo (.+)$/)
-      continue_last = (prev_fileinfo && prev_fileinfo == m[1])
-      prev_fileinfo = m[1]
-
-    # "2010/08/03 * * * 450 7:30am some event"
-    else
-      date, junk, junk, junk, time, event = line.strip.split(" ", 6)
-
-      if continue_last
-        events.last.end = Date.parse(date)
-      else
-        e = Event.new
-        e.desc = event
-        e.start = Date.parse(date)
-
-        if time != "*"
-          # i'm not sure how a time field of "450" corresponds to "07:30", so
-          # take the time out of the description
-          e.time, e.desc = e.desc.split(" ", 2)
-        end
-
-        events.push e
-      end
-    end
-  end
-
-  # discard events that ended before today and then print them
-  events.reject{|e| e.end < TODAY }.reverse.each do |e|
-    puts e.to_s(TODAY)
-  end
+# discard events that ended before today and then print them
+Calendar.events.reject{|e| e.end < TODAY }.reverse.each do |e|
+  puts e.to_s(TODAY)
 end
 
 BEGIN {
+  class Calendar
+    def self.events
+      evs = []
+
+      if RUBY_PLATFORM.match(/darwin/)
+        desc = nil
+
+        IO.popen("icalBuddy -b '' -nc " <<
+        "-eep attendees,location,notes,url,priority,uid -nrd " <<
+        "eventsToday+#{WEEKS_OUT * 7}").each_line do |line|
+          if m = line.match(/^    (... ..?, ....)( (at|-) (.+))?/)
+            e = Event.new
+            e.desc = desc
+            e.start = Date.parse(m[1])
+
+            # "12:00"
+            # "14:00 - 15:00"
+            # "Nov 29, 2014"
+            if m[4]
+              if n = m[4].match(/^(\d\d?:\d+)/)
+                e.time = n[1]
+              else
+                e.end = Date.parse(m[4])
+              end
+            end
+
+            evs.push e
+          else
+            desc = line.strip
+          end
+        end
+      else
+        prev_fileinfo = nil
+        continue_last = false
+
+        IO.popen("remind -q -g -s+#{WEEKS_OUT} -b1 -l #{REMIND_FILE}").
+        each_line do |line|
+          # "# fileinfo 8 /path/.reminders"
+          if m = line.match(/^# fileinfo (.+)$/)
+            continue_last = (prev_fileinfo && prev_fileinfo == m[1])
+            prev_fileinfo = m[1]
+
+          # "2010/08/03 * * * 450 7:30am some event"
+          else
+            date, junk, junk, junk, time, event = line.strip.split(" ", 6)
+
+            if continue_last
+              evs.last.end = Date.parse(date)
+            else
+              e = Event.new
+              e.desc = event
+              e.start = Date.parse(date)
+
+              if time != "*"
+                # i'm not sure how a time field of "450" corresponds to
+                # "07:30", so take the time out of the description
+                e.time, e.desc = e.desc.split(" ", 2)
+              end
+
+              evs.push e
+            end
+          end
+        end
+      end
+
+      evs
+    end
+  end
+
   class Event
     BOLD = "\e[1;1m"
     UNBOLD = "\e[0;0m"
-    GRAY = "\e[38;5;248m"
-    LIGHTGRAY = "\e[38;5;252m"
+    GRAY = "\e[38;5;239m"
+    LIGHTGRAY = "\e[38;5;242m"
     RESET = "\e[0;0m"
 
     attr_accessor :start
@@ -99,7 +134,7 @@ BEGIN {
 
     def to_s(from_day = Date.today)
       weeks = 0
-      if (days = self.start - from_day) > 7
+      if (days = (self.start - from_day).to_i) > 7
         weeks = (days.to_f / 7.0).floor
         days = days - (weeks * 7)
       end

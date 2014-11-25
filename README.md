@@ -1,4 +1,5 @@
-print a forecast of upcoming events from [remind(1)](http://www.roaringpenguin.com/products/remind)
+print a forecast of upcoming events from [remind(1)](http://www.roaringpenguin.com/products/remind),
+or [icalBuddy](https://github.com/ali-rantakari/icalBuddy) on OS X.
 
 with an example ~/.reminders file of:
 
@@ -9,6 +10,6 @@ with an example ~/.reminders file of:
 this utility will print (when run on august 5th)
 
 	jcs@humble:~> ruby remind_forecast.rb
-	some timed event today at 08:45 (thu 5 aug)
-	something here in 1 day (fri 6 aug to sun 8 aug)
 	some far out event in 3 weeks, 6 days (wed 1 sep)
+	something here in 1 day (fri 6 aug to sun 8 aug)
+	some timed event today at 08:45 (thu 5 aug)
